@@ -3,6 +3,12 @@
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body
+  * ingroup 		: template
+  * version 		: 1.0.0
+  * date    		: 31/05/2018
+  * author  		: Giovanni Caiazzo , Olawale Luqman Ajani, Luca Signorelli
+  * defgroup 		: Matrix_Temperature
+  *
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -52,8 +58,16 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-uint32_t tempReading = 0;
-uint32_t timestamp = 0;
+
+/* **************** */
+/* Global variables */
+/* **************** */
+/* The value of conversion process of ADC */
+uint32_t tempReading 	= 0;
+
+/* Timestamp of the sample*/
+uint32_t timestamp 		= 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -184,11 +198,31 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/* ************** */
+/* Local Function */
+/* ************** */
+/*!
+brief: 	Print a value of the temperature and its timestamp*/
+/*!file:	main.c*/
+/*! @param  value:		the value of the temperature in degrees centigrade*/
+/*! @param  message:	the message prints of the console with the timestamp*/
+/*! @retval None
+  */
 void PrintValues(float value, char message[40]) {
+
+	/*! Compute the value of the temperature*/
 	uint32_t decimal = timestamp%2*5;
+
+	/*! Compute the value of the seconds */
 	uint32_t sec = timestamp/2;
+
+	/*! Compute the value of the minutes */
 	uint32_t min = sec/60;
+
+	/*! Compute the value of the hours */
 	uint32_t hour = sec/3600;
+
 	if (sec >= 60) {
 		sec = 0;
 	}
@@ -198,19 +232,46 @@ void PrintValues(float value, char message[40]) {
 	if (hour >= 24) {
 				hour = 0;
 	}
+
+	/*! Put the value of the temperature with timestamp into the message variable */
 	sprintf(message, "T = %u C - %02lu:%02lu:%02lu.%lu 26th May 2018 \n\r", (int)value, hour, min, sec, decimal);
+
+	/*! Transmit the value of the temperature with timestamp to the console of the UART peripheral*/
 	HAL_UART_Transmit(&huart1, (uint8_t*)message, strlen(message), 100);
 }
 
+/* ************** */
+/* Local Function */
+/* ************** */
+/*!
+ brief: 	Regular conversion complete callback in non blocking mode.
+ 			Definition of the HAL_ADC_ConvCpltCallback function.
+			This function takes the sample value from the ADC
+ 			and converts it to temperature in degrees centigrade*/
+/*!file:		Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_adc.c*/
+/*!param:  	hadc pointer to a ADC_HandleTypeDef structure that contains
+         	the configuration information for the specified ADC.*/
+/*!retval: 	None*/
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
-	float vin = 0;
-	float value = 0;
-	char message[40] = {0};
+	float vin = 0; 					/*< This store vin */
+	float value = 0;				/*< This store value */
+	char message[40] = {0};			/*< This store message */
+
+	/*! Get the value of conversion process of ADC */
 	tempReading = HAL_ADC_GetValue(hadc);
+
+	/*! Conversion of value to volts in float  */
 	vin = ((float)tempReading/4095.0)*VREF;
+
+	/*! Conversion of value to temperature degrees centigrade in float  */
 	value = (((float)vin - V25)/SLOPE) + 25.0;
+
+	/*! Print a value of the temperature and its timestamp   */
 	PrintValues(value, message);
 }
+
+
 /* USER CODE END 4 */
 
 /**
